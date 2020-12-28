@@ -2,14 +2,10 @@ package com.sanju.jpgtopdf;
 
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.app.ActivityCompat;
 
-import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.pdf.PdfDocument;
 import android.graphics.pdf.PdfRenderer;
 import android.os.Build;
 import android.os.Bundle;
@@ -17,42 +13,59 @@ import android.os.Environment;
 import android.os.ParcelFileDescriptor;
 import android.util.Log;
 import android.view.View;
+import android.widget.Button;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+public class PdfToImageActivity extends AppCompatActivity {
 
-public class MainActivity extends AppCompatActivity {
+    Button button;
+    // Getting images from Test.pdf file.
+    File source = new File(Environment.getExternalStorageDirectory() + "/" + "Text" + ".pdf");
 
-//    private String directory = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES)
-//            +"/myCamera/";
+    // Images will be saved in Test folder.
+    File destination = new File(Environment.getExternalStorageDirectory() + "/Test");
 
+    @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_pdf_to_image);
 
-        ActivityCompat.requestPermissions(this, new String[]{WRITE_EXTERNAL_STORAGE},
-                PackageManager.PERMISSION_GRANTED);
+        button = findViewById(R.id.button);
+
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+// Getting images from pdf in png format.
+                try {
+                    getImagesFromPDF(source, destination);
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        });
+
     }
 
+    // This method is used to extract all pages in image (PNG) format.
     @RequiresApi(api = Build.VERSION_CODES.LOLLIPOP)
     private void getImagesFromPDF(File pdfFilePath, File DestinationFolder) throws IOException {
 
-        // Getting images from Test.pdf file.
-        File source = new File(Environment.getExternalStorageDirectory() + "/" + "Test" + ".pdf");
-
-        // Images will be saved in Test folder.
-        File destination = new File(Environment.getExternalStorageDirectory() + "/Test");
-
-        // Getting images from pdf in png format.
-        try {
-            getImagesFromPDF(source, destination);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+//        // Getting images from Test.pdf file.
+//        File source = new File(Environment.getExternalStorageDirectory() + "/" + "Test" + ".pdf");
+//
+//        // Images will be saved in Test folder.
+//        File destination = new File(Environment.getExternalStorageDirectory() + "/Test");
+//
+//        // Getting images from pdf in png format.
+//        try {
+//            getImagesFromPDF(source, destination);
+//        } catch (IOException e) {
+//            e.printStackTrace();
+//        }
 
         // Check if destination already exists then delete destination folder.
         if(DestinationFolder.exists()){
@@ -76,9 +89,26 @@ public class MainActivity extends AppCompatActivity {
 
             // Getting Page object by opening page.
             PdfRenderer.Page page = renderer.openPage(i);
+            int x;
+            int y;
+            Bitmap bitmap;
+            try {
+                x = page.getWidth();
+                y = page.getHeight();
+                bitmap = Bitmap.createBitmap(x, y,Bitmap.Config.ARGB_8888);
+
+            }catch (OutOfMemoryError e){
+                x = page.getWidth() / 2;
+                y = page.getHeight() / 2;
+                bitmap = Bitmap.createBitmap(x, y,Bitmap.Config.ARGB_8888);
+            }
+
+//            int size = Math.min(page.getWidth(), page.getHeight());
+//            int x = (page.getWidth() - size) / 2;
+//            int y = (page.getHeight() - size) / 2;
 
             // Creating empty bitmap. Bitmap.Config can be changed.
-            Bitmap bitmap = Bitmap.createBitmap(page.getWidth(), page.getHeight(),Bitmap.Config.ARGB_8888);
+//            bitmap = Bitmap.createBitmap(x, y,Bitmap.Config.ARGB_8888);
 
             // Creating Canvas from bitmap.
             Canvas canvas = new Canvas(bitmap);
@@ -114,34 +144,4 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-//    @RequiresApi(api = Build.VERSION_CODES.KITKAT)
-//    public void convertButton(View view){
-//
-//        String directory = Environment.getExternalStorageDirectory().toString();
-//        File myDir = new File( "/myCamera");
-//        myDir.mkdirs();
-//
-//        String file = directory + "first.jpg";
-//        Bitmap bitmap = BitmapFactory.decodeFile(file);
-//
-//        PdfDocument pdfDocument = new PdfDocument();
-//        PdfDocument.PageInfo myPageInfo = new PdfDocument.
-//                PageInfo.Builder(960,1280,1).create();
-//        PdfDocument.Page page = pdfDocument.startPage(myPageInfo);
-//
-//        page.getCanvas().drawBitmap(bitmap,0,0, null);
-//        pdfDocument.finishPage(page);
-//
-//        String pdfFile = directory + "/myPDFFile_3.pdf";
-//        File myPDFFile = new File(pdfFile);
-//
-//        try {
-//            pdfDocument.writeTo(new FileOutputStream(myPDFFile));
-//        } catch (IOException e) {
-//            e.printStackTrace();
-//        }
-//
-//        pdfDocument.close();
-//
-//    }
 }
